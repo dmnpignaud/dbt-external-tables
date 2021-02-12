@@ -1,14 +1,29 @@
 {% macro snowflake__create_external_table(source_node) %}
-
+    {{ log("create external table (execute mode :" ~ execute ~ ")")}}
     {%- set columns = source_node.columns.values() -%}
     {%- set external = source_node.external -%}
     {%- set partitions = external.partitions -%}
 
     {%- set is_csv = dbt_external_tables.is_csv(external.file_format) -%}
+    {%- set is_avro = dbt_external_tables.is_avro(external.file_format) -%}
+    {%- set relation = source(source_node.source_name, source_node.name) -%}
+                        
 
-{# https://docs.snowflake.net/manuals/sql-reference/sql/create-external-table.html #}
-{# This assumes you have already created an external stage #}
+    
+    {%- if not columns and is_avro -%}
+        {%- set columns = dbt_external_tables.read_avro_schema(source_node) -%}
+        {% set stage_exists = true %}
+        {# {%- set columns = [] -%} #}
+    {%- endif -%}
+
+    {% if not stage_exists %}
+        {{ dbt_external_tables.create_external_stage(source_node) }}
+    {% endif %}
+
+    {# https://docs.snowflake.net/manuals/sql-reference/sql/create-external-table.html #}
+    {# This assumes you have already created an external stage #}
     create or replace external table {{source(source_node.source_name, source_node.name)}}
+
     {%- if columns or partitions -%}
     (
         {%- if partitions -%}{%- for partition in partitions %}
@@ -27,7 +42,7 @@
     )
     {%- endif -%}
     {% if partitions %} partition by ({{partitions|map(attribute='name')|join(', ')}}) {% endif %}
-    location = {{external.location}} {# stage #}
+    location = @{{get_external_stage_name(relation)}}
     {% if external.auto_refresh -%} auto_refresh = {{external.auto_refresh}} {%- endif %}
     {% if external.pattern -%} pattern = '{{external.pattern}}' {%- endif %}
     file_format = {{external.file_format}}
