@@ -3,17 +3,18 @@
 {% endmacro %}
 
 {% macro create_external_stage(source_node) %}
-    {%- set stage_storage_integration = "S3_INTEGRATION_PROD" -%}
+    {% set stage_storage_integration = "S3_INTEGRATION_PROD" %}
     {{ log("create stage (execute mode :" ~ execute ~ ")")}}
     {{ log(source_node)}}
-    {%- set external = source_node.external -%}
+    {% set external = source_node.external %}
     
     {#{%- set partition_names = external.partitions | map(attribute='name') -%}#}
 
     {% set stage_url = "s3://" + env_var('S3_BUCKET') + "/raw/" + source_node.source_name + "/" +  source_node.name + "/" %}
 
-    {% if not external.partitions|length %}
-        {%- set stage_url = stage_url + env_var('DATE_TO_LOAD') + "/"  -%}
+    {# {% if not external.partitions|length %} #}
+    {% if external.partitions is not defined %}
+        {% set stage_url = stage_url + env_var('DATE_TO_LOAD') + "/"  %}
     {% endif %}
 
     {# {%- set stage_url = "s3://" + env_var('S3_BUCKET') + "/" + external.s3_prefix -%} #}
