@@ -9,11 +9,10 @@
     {%- set relation = source(source_node.source_name, source_node.name) -%}
                         
 
-    
+    {# if the columns of the dataset are not statically provided, we read the companion avro schema on S3 and generate it dynamically #}
     {%- if not columns and is_avro -%}
         {%- set columns = dbt_external_tables.read_avro_schema(source_node) -%}
         {% set stage_exists = true %}
-        {# {%- set columns = [] -%} #}
     {%- endif -%}
 
     {% if not stage_exists %}

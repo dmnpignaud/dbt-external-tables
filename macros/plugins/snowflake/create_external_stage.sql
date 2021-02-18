@@ -8,9 +8,15 @@
     {{ log(source_node)}}
     {%- set external = source_node.external -%}
     
-    {%- set partition_names = external.partitions | map(attribute='name') -%}
-    
-    {%- set stage_url = "s3://" + env_var('S3_BUCKET') + "/" + external.s3_prefix -%}
+    {#{%- set partition_names = external.partitions | map(attribute='name') -%}#}
+
+    {% set stage_url = "s3://" + env_var('S3_BUCKET') + "/raw/" + source_node.source_name + "/" +  source_node.name + "/" %}
+
+    {% if not external.partitions|length %}
+        {%- set stage_url = stage_url + env_var('DATE_TO_LOAD') + "/"  -%}
+    {% endif %}
+
+    {# {%- set stage_url = "s3://" + env_var('S3_BUCKET') + "/" + external.s3_prefix -%} #}
     
     {%- set relation = source(source_node.source_name, source_node.name) -%}
     
