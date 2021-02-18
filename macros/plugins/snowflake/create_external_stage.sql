@@ -14,7 +14,11 @@
 
     {# {% if not external.partitions|length %} #}
     {% if external.partitions is not defined %}
+        {{log("xternal.partitions is not defined")}}
         {% set stage_url = stage_url + env_var('DATE_TO_LOAD') + "/"  %}
+    {% else %}
+        {{log("xternal.partitions is defined")}}
+        {{log(external.partitions)}}
     {% endif %}
 
     {# {%- set stage_url = "s3://" + env_var('S3_BUCKET') + "/" + external.s3_prefix -%} #}
